@@ -1,5 +1,5 @@
 {
-  "name": "remix-sse-chat-b2b5",
+  "name": "remix-sse-chat",
   "private": true,
   "sideEffects": false,
   "scripts": {

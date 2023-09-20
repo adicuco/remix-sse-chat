@@ -3,6 +3,8 @@ import { json, redirect } from "@remix-run/node";
 import { Form, useActionData } from "@remix-run/react";
 import { useEffect, useRef } from "react";
 
+import { EVENTS } from "~/events";
+
 import { createNote } from "~/models/note.server";
 import { requireUserId } from "~/session.server";
 
@@ -28,6 +30,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const note = await createNote({ body, title, userId });
+
+  EVENTS.NOTES_ADDED(note.id);
 
   return redirect(`/notes/${note.id}`);
 };

@@ -1,30 +1,26 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet } from "@remix-run/react";
+import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 
-import { useLiveLoader } from "~/hooks/useLiveLoader";
-
-import { getNoteListItems } from "~/models/note.server";
 import { requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUserId(request);
-  const noteListItems = await getNoteListItems();
-  return json({ noteListItems });
+  return json({});
 };
 
 export default function NotesPage() {
-  const data = useLiveLoader<typeof loader>();
+  //   const data = useLoaderData<typeof loader>();
   const user = useUser();
 
   return (
     <div className="flex h-full min-h-screen flex-col">
       <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
         <h1 className="text-3xl font-bold">
-          <Link to=".">Notes</Link>
+          <Link to=".">Chat</Link>
         </h1>
-        <p>{user.email}</p>
+
         <Form action="/logout" method="post">
           <button
             type="submit"
@@ -37,13 +33,11 @@ export default function NotesPage() {
 
       <main className="flex h-full bg-white">
         <div className="h-full w-80 border-r bg-gray-50">
-          <Link to="new" className="block p-4 text-xl text-blue-500">
-            + New Note
-          </Link>
+          <div className="block p-4 text-xl text-blue-500">{user.email}</div>
 
           <hr />
 
-          {data.noteListItems.length === 0 ? (
+          {/* {data.noteListItems.length === 0 ? (
             <p className="p-4">No notes yet</p>
           ) : (
             <ol>
@@ -60,7 +54,7 @@ export default function NotesPage() {
                 </li>
               ))}
             </ol>
-          )}
+          )} */}
         </div>
 
         <div className="flex-1 p-6">
