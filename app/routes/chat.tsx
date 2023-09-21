@@ -28,16 +28,6 @@ export default function ChatPage() {
 
   const [users, setUsers] = useState<ChatUser[]>([]);
 
-  const [notesNotifications, setnotesNotifications] = useState(0);
-
-  const newNotes = useEventSource("/events/notes-added");
-
-  useEffect(() => {
-    if (newNotes) {
-      setnotesNotifications((n) => n + 1);
-    }
-  }, [newNotes]);
-
   const userJoined = useEventSource("/events/chat-user-joined");
   const userLeft = useEventSource("/events/chat-user-left");
 
@@ -116,13 +106,7 @@ export default function ChatPage() {
             to="/notes"
             className="flex items-center p-4 text-xl text-blue-500"
           >
-            <span>Notes</span>
-
-            {notesNotifications > 0 && (
-              <span className="text-sm ml-4 rounded-full px-2.5 py-1 bg-blue-600 text-white">
-                {notesNotifications > 2 ? "2+" : notesNotifications}
-              </span>
-            )}
+            Notes
           </Link>
 
           <hr />

@@ -6,10 +6,10 @@ import { useEffect, useRef } from "react";
 import { EVENTS } from "~/events";
 
 import { createNote } from "~/models/note.server";
-import { requireUserId } from "~/session.server";
+import { requireUser } from "~/session.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const userId = await requireUserId(request);
+  const user = await requireUser(request);
 
   const formData = await request.formData();
   const title = formData.get("title");
@@ -29,9 +29,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const note = await createNote({ body, title, userId });
+  const note = await createNote({ body, title, userId: user.id });
 
-  EVENTS.NOTES_ADDED(note.id);
+  EVENTS.NOTES_ADDED({
+    id: note.id,
+    title: note.title,
+    email: user.email,
+  });
 
   return redirect(`/notes/${note.id}`);
 };

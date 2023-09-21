@@ -3,10 +3,22 @@ import { EventEmitter } from "events";
 export const emitter = new EventEmitter();
 
 export const EVENTS = {
-  NOTES_ADDED: (noteId: string) => {
+  NOTES_ADDED: ({
+    id,
+    title,
+    email,
+  }: {
+    id: string;
+    title: string;
+    email: string;
+  }) => {
     emitter.emit("/notes");
-    emitter.emit(`/notes/${noteId}`);
-    emitter.emit("/notes-added");
+    emitter.emit(`/notes/${id}`);
+    emitter.emit(`/chat-messages-added`, {
+      email: "system",
+      message: `New note added: "${title}" by ${email}`,
+      timestamp: new Date().toISOString(),
+    });
   },
   NOTES_DELETED: (noteId: string) => {
     emitter.emit("/notes");
