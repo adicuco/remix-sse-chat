@@ -8,37 +8,6 @@ import { requireUser } from "~/session.server";
 
 import { useUser } from "~/utils";
 
-// type ChatUser = {
-//   email: string;
-//   lastActive: number;
-// };
-// const users: ChatUser[] = [];
-
-// export const loader = async ({ request }: LoaderFunctionArgs) => {
-//   const user = await requireUser(request);
-
-//   if (!users.some((u) => u.email === user.email)) {
-//     users.push({
-//       email: user.email,
-//       lastActive: Date.now(),
-//     });
-//     // EVENTS.CHAT_USER_JOINED(user.email);
-//   } else {
-//     const index = users.findIndex((u) => u.email === user.email);
-//     users[index].lastActive = Date.now();
-//   }
-
-//   // remove user after 5 minutes of inactivity
-//   users.forEach((u, i) => {
-//     if (Date.now() - u.lastActive > 1000 * 60) {
-//       users.splice(i, 1);
-//       EVENTS.CHAT_USER_LEFT(u.email);
-//     }
-//   });
-
-//   return json({ users });
-// };
-
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(request);
 
@@ -46,8 +15,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return redirect("/chat");
 };
-// if (!users.some((u) => u.email === user.email)) {
-//   users.push({
 
 type ChatUser = {
   email: string;
@@ -55,13 +22,21 @@ type ChatUser = {
 };
 
 export default function ChatPage() {
-  // const { users } = useLiveLoader<typeof loader>();
-
   const { pathname } = useLocation();
 
   const user = useUser();
 
   const [users, setUsers] = useState<ChatUser[]>([]);
+
+  const [notesNotifications, setnotesNotifications] = useState(0);
+
+  const newNotes = useEventSource("/events/notes-added");
+
+  useEffect(() => {
+    if (newNotes) {
+      setnotesNotifications((n) => n + 1);
+    }
+  }, [newNotes]);
 
   const userJoined = useEventSource("/events/chat-user-joined");
   const userLeft = useEventSource("/events/chat-user-left");
@@ -137,8 +112,17 @@ export default function ChatPage() {
 
       <main className="flex h-full bg-white overflow-hidden">
         <div className="h-full w-80 border-r bg-gray-50">
-          <Link to="/notes" className="block p-4 text-xl text-blue-500">
-            Notes
+          <Link
+            to="/notes"
+            className="flex items-center p-4 text-xl text-blue-500"
+          >
+            <span>Notes</span>
+
+            {notesNotifications > 0 && (
+              <span className="text-sm ml-4 rounded-full px-2.5 py-1 bg-blue-600 text-white">
+                {notesNotifications > 2 ? "2+" : notesNotifications}
+              </span>
+            )}
           </Link>
 
           <hr />

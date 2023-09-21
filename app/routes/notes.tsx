@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, NavLink, Outlet } from "@remix-run/react";
+import { useEffect, useState } from "react";
+import { useEventSource } from "~/hooks/useEventSource";
 
 import { useLiveLoader } from "~/hooks/useLiveLoader";
 
@@ -17,6 +19,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export default function NotesPage() {
   const data = useLiveLoader<typeof loader>();
   const user = useUser();
+
+  const [messagesNotifications, setMessagesNotifications] = useState(0);
+
+  const newMessages = useEventSource("/events/chat-messages-added");
+
+  useEffect(() => {
+    if (newMessages) {
+      setMessagesNotifications((n) => n + 1);
+    }
+  }, [newMessages]);
 
   return (
     <div className="flex h-full min-h-screen flex-col">
@@ -36,9 +48,18 @@ export default function NotesPage() {
       </header>
 
       <main className="flex h-full bg-white">
-        <div className="h-full w-80 border-r bg-gray-50">
-          <Link to="/chat" className="block p-4 text-xl text-green-500">
-            Chat
+        <div className="h-full  w-80 border-r bg-gray-50">
+          <Link
+            to="/chat"
+            className=" p-4 text-xl text-green-500 flex items-center"
+          >
+            <span>Chat</span>
+
+            {messagesNotifications > 0 && (
+              <span className="text-sm ml-4 rounded-full px-2.5 py-1 bg-green-600 text-white">
+                {messagesNotifications > 5 ? "5+" : messagesNotifications}
+              </span>
+            )}
           </Link>
 
           <hr />

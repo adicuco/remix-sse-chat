@@ -6,6 +6,7 @@ export const EVENTS = {
   NOTES_ADDED: (noteId: string) => {
     emitter.emit("/notes");
     emitter.emit(`/notes/${noteId}`);
+    emitter.emit("/notes-added");
   },
   NOTES_DELETED: (noteId: string) => {
     emitter.emit("/notes");
