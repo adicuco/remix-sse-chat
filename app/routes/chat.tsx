@@ -1,26 +1,130 @@
-import type { LoaderFunctionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import type { ActionFunctionArgs } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
+import { Form, Link, Outlet, useLocation } from "@remix-run/react";
+import { useEffect, useState } from "react";
+import { EVENTS } from "~/events";
+import { useEventSource } from "~/hooks/useEventSource";
+import { requireUser } from "~/session.server";
 
-import { requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await requireUserId(request);
-  return json({});
+// type ChatUser = {
+//   email: string;
+//   lastActive: number;
+// };
+// const users: ChatUser[] = [];
+
+// export const loader = async ({ request }: LoaderFunctionArgs) => {
+//   const user = await requireUser(request);
+
+//   if (!users.some((u) => u.email === user.email)) {
+//     users.push({
+//       email: user.email,
+//       lastActive: Date.now(),
+//     });
+//     // EVENTS.CHAT_USER_JOINED(user.email);
+//   } else {
+//     const index = users.findIndex((u) => u.email === user.email);
+//     users[index].lastActive = Date.now();
+//   }
+
+//   // remove user after 5 minutes of inactivity
+//   users.forEach((u, i) => {
+//     if (Date.now() - u.lastActive > 1000 * 60) {
+//       users.splice(i, 1);
+//       EVENTS.CHAT_USER_LEFT(u.email);
+//     }
+//   });
+
+//   return json({ users });
+// };
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const user = await requireUser(request);
+
+  EVENTS.CHAT_USER_LEFT(user.email);
+
+  return redirect("/chat");
+};
+// if (!users.some((u) => u.email === user.email)) {
+//   users.push({
+
+type ChatUser = {
+  email: string;
+  isActive: boolean;
 };
 
-export default function NotesPage() {
-  //   const data = useLoaderData<typeof loader>();
+export default function ChatPage() {
+  // const { users } = useLiveLoader<typeof loader>();
+
+  const { pathname } = useLocation();
+
   const user = useUser();
 
+  const [users, setUsers] = useState<ChatUser[]>([]);
+
+  const userJoined = useEventSource("/events/chat-user-joined");
+  const userLeft = useEventSource("/events/chat-user-left");
+
+  useEffect(() => {
+    if (userJoined) {
+      const { email } = JSON.parse(userJoined) as {
+        email: string;
+      };
+
+      setUsers((users) => {
+        const newEmail = email.replace(/"/g, "");
+        const index = users.findIndex((u) => u.email === newEmail);
+
+        if (index !== -1) {
+          users[index].isActive = true;
+          return users;
+        }
+
+        return [
+          ...users,
+          {
+            email: newEmail,
+            isActive: true,
+          },
+        ];
+      });
+    }
+  }, [userJoined]);
+
+  useEffect(() => {
+    if (userLeft) {
+      const { email } = JSON.parse(userLeft) as {
+        email: string;
+      };
+
+      setUsers((users) => {
+        const newEmail = email.replace(/"/g, "");
+        const index = users.findIndex((u) => u.email === newEmail);
+        if (index === -1) return users;
+
+        const newUsers = [...users];
+        newUsers.splice(index, 1);
+
+        return [
+          ...newUsers,
+          {
+            email: newEmail,
+            isActive: false,
+          },
+        ];
+      });
+    }
+  }, [userLeft]);
+
   return (
-    <div className="flex h-full min-h-screen flex-col">
+    <div className="flex h-full min-h-screen flex-col overflow-hidden">
       <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
         <h1 className="text-3xl font-bold">
           <Link to=".">Chat</Link>
         </h1>
 
+        <p>{user.email}</p>
         <Form action="/logout" method="post">
           <button
             type="submit"
@@ -31,33 +135,36 @@ export default function NotesPage() {
         </Form>
       </header>
 
-      <main className="flex h-full bg-white">
+      <main className="flex h-full bg-white overflow-hidden">
         <div className="h-full w-80 border-r bg-gray-50">
-          <div className="block p-4 text-xl text-blue-500">{user.email}</div>
+          <Link to="/notes" className="block p-4 text-xl text-blue-500">
+            Notes
+          </Link>
 
           <hr />
 
-          {/* {data.noteListItems.length === 0 ? (
-            <p className="p-4">No notes yet</p>
-          ) : (
-            <ol>
-              {data.noteListItems.map((note) => (
-                <li key={note.id}>
-                  <NavLink
-                    className={({ isActive }) =>
-                      `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
-                    }
-                    to={note.id}
-                  >
-                    📝 {note.title}
-                  </NavLink>
-                </li>
-              ))}
-            </ol>
-          )} */}
+          {pathname.includes("live") && (
+            <Form method="post">
+              <button type="submit" className="block p-4 text-xl text-red-500">
+                Leave chat
+              </button>
+            </Form>
+          )}
+
+          <hr />
+
+          <ol>
+            {users.map(({ email, isActive }) => (
+              <li key={email}>
+                <div className="block border-b p-4 text-xl">
+                  {isActive ? "🟢" : "🔴"} {email}
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <div className="flex-1 p-6">
+        <div className="flex-1 px-6 relative">
           <Outlet />
         </div>
       </main>

@@ -37,6 +37,12 @@ export default function NotesPage() {
 
       <main className="flex h-full bg-white">
         <div className="h-full w-80 border-r bg-gray-50">
+          <Link to="/chat" className="block p-4 text-xl text-green-500">
+            Chat
+          </Link>
+
+          <hr />
+
           <Link to="new" className="block p-4 text-xl text-blue-500">
             + New Note
           </Link>
