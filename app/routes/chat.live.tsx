@@ -111,8 +111,19 @@ export default function ChatLivePage() {
           >
             <div
               className={clsx("flex flex-col rounded-md p-3", {
-                "bg-blue-300": message.email === user.email,
-                "bg-gray-300": message.email !== user.email,
+                "bg-green-300":
+                  message.email === "system" &&
+                  message.message.includes("joined"),
+                "bg-red-300":
+                  message.email === "system" &&
+                  message.message.includes("left"),
+                "bg-purple-300":
+                  message.email === "system" &&
+                  message.message.includes("added"),
+                "bg-blue-300":
+                  message.email !== "system" && message.email === user.email,
+                "bg-gray-300":
+                  message.email !== "system" && message.email !== user.email,
               })}
             >
               <div className="flex items-center">
